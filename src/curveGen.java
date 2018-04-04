@@ -7,7 +7,7 @@ import com.jogamp.nativewindow.ScalableSurface;
 
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
-import javax.vecmath.Point2f;
+import javax.vecmath.*;
 
 import java.util.ArrayList;
 import java.util.Scanner;
@@ -180,12 +180,34 @@ public class curveGen extends JFrame implements GLEventListener, KeyListener, Mo
          * in the 'curve_pts' array, so that the curve can be saved to a disk file later
          * 
          * if there are less than 3 interpolating points, return immediately
-         */   
-
+         */
 		int npts = control_pts.size();
 		if (npts < 3)
 			return;
-		curve_pts.clear();     
+		curve_pts.clear();
+
+        Matrix3f basis = new Matrix3f(1, 0, 0, -3, 4, -1, 2, -4, 2);
+
+        for (int point_index = 0; point_index < npts-2; point_index += 2){
+            for (float j = 0; j <= nsegment; j++) {
+                float u = j/nsegment;
+                Point2f q = new Point2f();
+                for (int i = 0; i<=2; i++) {
+                    Vector3f temp = new Vector3f();
+                    basis.getColumn(i, temp);
+                    float b_i = (new Vector3f(1, u, u*u)).dot(temp);
+                    q.x += b_i * control_pts.get(point_index + i).x;
+                    q.y += b_i * control_pts.get(point_index + i).y;
+                }
+                curve_pts.add(q);
+            }
+        }
+        for (int i = 0; i < curve_pts.size() - 1; i ++) {
+            Point2f tempPoint1 = curve_pts.get(i);
+            Point2f tempPoint2 = curve_pts.get(i+1);
+            drawLine(tempPoint1.x, tempPoint1.y, tempPoint2.x, tempPoint2.y, 0,1,0);
+        }
+
     }
 
     private void drawCubicBezier() {
@@ -199,6 +221,32 @@ public class curveGen extends JFrame implements GLEventListener, KeyListener, Mo
          * 
          * if there are less than 4 control points, return immediately
          */
+        int npts = control_pts.size();
+        if (npts < 4)
+            return;
+        curve_pts.clear();
+
+        Matrix4f basis = new Matrix4f(1, 0, 0, 0, -3, 3, 0, 0, 3, -6, 3, 0, -1, 3, -3, 1);
+
+        for (int point_index = 0; point_index < npts-3; point_index += 3){
+            for (float j = 0; j <= nsegment; j++) {
+                float u = j/nsegment;
+                Point2f q = new Point2f();
+                for (int i = 0; i<=3; i++) {
+                    Vector4f temp = new Vector4f();
+                    basis.getColumn(i, temp);
+                    float b_i = (new Vector4f(1, u, u*u, u*u*u)).dot(temp);
+                    q.x += b_i * control_pts.get(point_index + i).x;
+                    q.y += b_i * control_pts.get(point_index + i).y;
+                }
+                curve_pts.add(q);
+            }
+        }
+        for (int i = 0; i < curve_pts.size() - 1; i ++) {
+            Point2f tempPoint1 = curve_pts.get(i);
+            Point2f tempPoint2 = curve_pts.get(i+1);
+            drawLine(tempPoint1.x, tempPoint1.y, tempPoint2.x, tempPoint2.y, 0,1,0);
+        }
     }
 
     private void drawBspline() {
