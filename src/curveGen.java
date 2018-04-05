@@ -187,8 +187,7 @@ public class curveGen extends JFrame implements GLEventListener, KeyListener, Mo
 		curve_pts.clear();
 
         Matrix3f basis = new Matrix3f(1, 0, 0, -3, 4, -1, 2, -4, 2);
-
-        for (int point_index = 0; point_index < npts-2; point_index += 2){
+        for (int index = 0; index < npts-2; index += 2){
             for (float j = 0; j <= nsegment; j++) {
                 float u = j/nsegment;
                 Point2f q = new Point2f();
@@ -196,16 +195,16 @@ public class curveGen extends JFrame implements GLEventListener, KeyListener, Mo
                     Vector3f temp = new Vector3f();
                     basis.getColumn(i, temp);
                     float b_i = (new Vector3f(1, u, u*u)).dot(temp);
-                    q.x += b_i * control_pts.get(point_index + i).x;
-                    q.y += b_i * control_pts.get(point_index + i).y;
+                    q.x += b_i * control_pts.get(index + i).x;
+                    q.y += b_i * control_pts.get(index + i).y;
                 }
                 curve_pts.add(q);
             }
         }
         for (int i = 0; i < curve_pts.size() - 1; i ++) {
-            Point2f tempPoint1 = curve_pts.get(i);
-            Point2f tempPoint2 = curve_pts.get(i+1);
-            drawLine(tempPoint1.x, tempPoint1.y, tempPoint2.x, tempPoint2.y, 0,1,0);
+            drawLine(curve_pts.get(i).x, curve_pts.get(i).y,
+                    curve_pts.get(i+1).x, curve_pts.get(i+1).y,
+                    0,1,0);
         }
 
     }
@@ -227,8 +226,7 @@ public class curveGen extends JFrame implements GLEventListener, KeyListener, Mo
         curve_pts.clear();
 
         Matrix4f basis = new Matrix4f(1, 0, 0, 0, -3, 3, 0, 0, 3, -6, 3, 0, -1, 3, -3, 1);
-
-        for (int point_index = 0; point_index < npts-3; point_index += 3){
+        for (int index = 0; index < npts-3; index += 3){
             for (float j = 0; j <= nsegment; j++) {
                 float u = j/nsegment;
                 Point2f q = new Point2f();
@@ -236,16 +234,16 @@ public class curveGen extends JFrame implements GLEventListener, KeyListener, Mo
                     Vector4f temp = new Vector4f();
                     basis.getColumn(i, temp);
                     float b_i = (new Vector4f(1, u, u*u, u*u*u)).dot(temp);
-                    q.x += b_i * control_pts.get(point_index + i).x;
-                    q.y += b_i * control_pts.get(point_index + i).y;
+                    q.x += b_i * control_pts.get(index + i).x;
+                    q.y += b_i * control_pts.get(index + i).y;
                 }
                 curve_pts.add(q);
             }
         }
         for (int i = 0; i < curve_pts.size() - 1; i ++) {
-            Point2f tempPoint1 = curve_pts.get(i);
-            Point2f tempPoint2 = curve_pts.get(i+1);
-            drawLine(tempPoint1.x, tempPoint1.y, tempPoint2.x, tempPoint2.y, 0,1,0);
+            drawLine(curve_pts.get(i).x, curve_pts.get(i).y,
+                    curve_pts.get(i+1).x, curve_pts.get(i+1).y,
+                    0,1,0);
         }
     }
 
@@ -267,6 +265,37 @@ public class curveGen extends JFrame implements GLEventListener, KeyListener, Mo
          * 
          * if there are less than 4 control points, return immediately
          */
+        int npts = control_pts.size();
+        if (npts < 4)
+            return;
+        curve_pts.clear();
+
+        ArrayList<Point2f> new_control_pts = (ArrayList<Point2f>)control_pts.clone();
+        if (close_curve) {
+            new_control_pts.addAll(control_pts);
+            npts = new_control_pts.size();
+        }
+        Matrix4f basis = new Matrix4f(1, 4, 1, 0, -3, 0, 3, 0, 3, -6, 3, 0, -1, 3, -3, 1);
+        basis.mul(1.0f / 6.0f);
+        for (int index = 0; index < npts-3; index ++){
+            for (float j = 0; j <= nsegment; j++) {
+                float u = j/nsegment;
+                Point2f q = new Point2f();
+                for (int i = 0; i<=3; i++) {
+                    Vector4f temp = new Vector4f();
+                    basis.getColumn(i, temp);
+                    float b_i = (new Vector4f(1, u, u*u, u*u*u)).dot(temp);
+                    q.x += b_i * new_control_pts.get(index + i).x;
+                    q.y += b_i * new_control_pts.get(index + i).y;
+                }
+                curve_pts.add(q);
+            }
+        }
+        for (int i = 0; i < curve_pts.size() - 1; i ++) {
+            drawLine(curve_pts.get(i).x, curve_pts.get(i).y,
+                    curve_pts.get(i+1).x, curve_pts.get(i+1).y,
+                    0,1,0);
+        }
     }
 
     /* gl display function */
